@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Date;
 
-class RequestHandler {
+class RequestHandler implements Runnable{
     protected Socket clientSocket;
     private static String DEFAULT_FILES_DIR;
     private static final int BUFFER_SIZE = 2048;
@@ -20,6 +20,7 @@ class RequestHandler {
         DEFAULT_FILES_DIR = System.getProperty("user.dir") + path;
     }
 
+    @Override
     public void run() {
         InputStream input = null;
         OutputStream output = null;
@@ -41,12 +42,12 @@ class RequestHandler {
 
             switch (method) {
                 case "GET": {
-                    String url = getRequstURL(readRequest);
+                    String url = getRequestURL(readRequest);
                     sendFile(url, output, false);
                     break;
                 }
                 case "HEAD": {
-                    String url = getRequstURL(readRequest);
+                    String url = getRequestURL(readRequest);
                     sendFile(url, output, true);
                     break;
                 }
@@ -70,20 +71,9 @@ class RequestHandler {
             } catch (IOException e) {
                 //e.printStackTrace();
             }
-            /*try {
-
-            } catch (IOException e) {
-                //e.printStackTrace();
-            }*/
         }
     }
 
-    /**
-     * Получить заголовок запроса
-     * @param input поток ввода
-     * @return строка, содержащая содержимое запроса
-     * @throws IOException
-     */
     private String readRequest(InputStream input) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(input));
         StringBuilder builder = new StringBuilder();
@@ -98,12 +88,7 @@ class RequestHandler {
         return builder.toString();
     }
 
-    /**
-     * Получить путь до файла
-     * @param header заголовок запроса
-     * @return null если путь до фалйа небезопасен, иначе строка с путем до файла
-     */
-    private String getRequstURL(String header) {
+    private String getRequestURL(String header) {
         int from = header.indexOf(" ") + 1;
         if (from == 0)
             return DEFAULT_FILES_DIR+"/index.html";
@@ -129,27 +114,14 @@ class RequestHandler {
         return DEFAULT_FILES_DIR + uri;
     }
 
-    /**
-     * Получить метод запроса
-     * @param header строка с заголовком запроса
-     * @return строка с методом
-     */
     private static String getRequestMethod(String header) {
-        //System.out.println("getRequestMethod:"+header);
         int to = header.indexOf(" ");
         if (to == -1) {
-            // System.out.println("noo:"+header);
             return null;
         }
         return header.substring(0,to);
     }
 
-    /**
-     * Отправить ответ с телом
-     * @param url путь до файла
-     * @param out поток вывода
-     * @param isHead флаг является ли метод запроса HEAD
-     */
     private void sendFile(String url, OutputStream out, Boolean isHead) {
         if (url == null) {
             writeResponseHeader(out, 403, null, 0);
