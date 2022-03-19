@@ -12,19 +12,19 @@ class AsyncQueue {
     }
 
     public synchronized void add(Runnable item) {
-        while (this.queue.size() == limit) {
+        while (queue.size() == limit) {
             try {
                 wait();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
-        this.queue.addLast(item);
+        queue.addLast(item);
         notify();
     }
 
     public synchronized Runnable remove() {
-        while (this.queue.isEmpty()) {
+        while (queue.isEmpty()) {
             try {
                 wait();
             } catch (InterruptedException e) {
